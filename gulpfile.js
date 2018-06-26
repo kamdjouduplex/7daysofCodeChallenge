@@ -58,9 +58,9 @@ gulp.task('clean:dist', function() {
 
 // here we watch for the filles on user saved
 gulp.task('watch', ['browserSync'], function (){
- 	gulp.watch('app/assets/css/**/*.scss', browserSync.reload); 
+ 	gulp.watch('app/assets/css/*.css', browserSync.reload); 
   	gulp.watch('app/*.html', browserSync.reload); 
-  	gulp.watch('app/assets/js/**/*.js', browserSync.reload); 
+  	gulp.watch('app/assets/js/*.js', browserSync.reload); 
 });
 
 //here we build the production package
@@ -71,9 +71,10 @@ gulp.task('build', function (callback) {
   )
 })
 
-// Here our default task runner
-gulp.task('default', function (callback) {
+
+// Here we start our serve and start watch files change
+gulp.task('serve', function (callback) {
   runSequence(['browserSync', 'watch'],
     callback
   )
-})
+});
