@@ -6,8 +6,24 @@ const fetch   = window.fetch;
 const base    = 'https://free.currencyconverterapi.com';
 
 
+if('serviceWorker' in navigator) {
+	window.addEventListener('load', function(){
+		navigator.serviceWorker.register('./sw.js')
+		.then(function(reg){
+			console.log('sw registered');
+		})
+		.catch(function(error){
+			console.log(error);
+		})
+	})
+} else {
+	alert('service worker not supported on this browser');
+}
 
 
+
+
+//standart version without service worker
 fetch(base+'/api/v5/countries')
 .then(res => res.json())
 .then(json => {
@@ -28,7 +44,7 @@ fetch(base+'/api/v5/convert?q=USD_XAF&compact=ultra')
 
 
 const converter = () => {
-	
+
 	const ea = document.getElementById('entered_amount');
 	const cf = document.getElementById('currency_from');
 	const ct = document.getElementById('currency_to');
