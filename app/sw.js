@@ -1,9 +1,10 @@
 
 'use strict';
 
-const cache_name   = 'app-cache-v1';
+const cache_name   = 'app-cache-v2';
 const static_files =[
 	'/',
+	'/index.html',
 	'/assets/css/style.css',
 	'/assets/css/vendor/bootstrap.min.css',
 
@@ -26,7 +27,17 @@ self.addEventListener('install', function(event){
 	)
 });
 
-
+self.addEventListener('activate', function(event){
+	event.waitUntil(
+		caches.keys().then(function(keys){
+			return Promise.all(keys.map(function(key, i){
+				if(key !== cache_name){
+					return caches.delete(keys[i]);
+				}
+			}));
+		})
+	)
+});
 
 self.addEventListener('fetch', function(event) {
   event.respondWith(
@@ -34,11 +45,12 @@ self.addEventListener('fetch', function(event) {
       .then(function(response) {
         // Cache hit - return response
         if (response) {
-        	console.log(response);
           	return response;
         }
         return fetch(event.request);
-      }
-    )
+      })
+      .catch(function(){
+      	return event.default();
+      })
   );
 });

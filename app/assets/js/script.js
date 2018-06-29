@@ -4,7 +4,11 @@
 
 const fetch   = window.fetch;
 const base    = 'https://free.currencyconverterapi.com';
+var currencies = {};
 
+const db_name = 'currency_db';
+const db_version = 2;
+let db;
 
 if('serviceWorker' in navigator) {
 	window.addEventListener('load', function(){
@@ -25,10 +29,12 @@ if('serviceWorker' in navigator) {
 
 //standart version without service worker
 fetch(base+'/api/v5/countries')
+//fetch('/assets/js/countries.json')
 .then(res => res.json())
 .then(json => {
-	const currencies = json;
+	currencies = json;
 	display_currency_list(currencies);
+	setIndexDB(db_name, db_version, currencies);
 });
 
 
@@ -43,15 +49,51 @@ fetch(base+'/api/v5/convert?q=USD_XAF&compact=ultra')
 
 
 
+const amount_change = (val) => {
+	if( 'localStorage' in window){
+		if('amount' in localStorage)
+			localStorage.removeItem('amount');
+		localStorage.setItem('amount', val);
+	}else{
+		alert('this application need localStorage to perform properly');
+	}
+}
+
+const from_cu_change = (val) => {
+	if( 'localStorage' in window){
+		if('from_cu' in localStorage)
+			localStorage.removeItem('from_cu');
+		localStorage.setItem('from_cu', val);
+	}else{
+		alert('this application need localStorage to perform properly');
+	}
+}  
+
+const to_cu_change = (val) => {
+	if( 'localStorage' in window){
+		if('to_cu' in localStorage)
+			localStorage.removeItem('to_cu');
+		localStorage.setItem('to_cu', val);
+	}else{
+		alert('this application need localStorage to perform properly');
+	}
+}
+
 const converter = () => {
 
-	const ea = document.getElementById('entered_amount');
-	const cf = document.getElementById('currency_from');
-	const ct = document.getElementById('currency_to');
-
-	let entered_amount  = ea.value  || 1;
-	let currency_from   = cf.options[cf.selectedIndex].value  || 'USD';
-	let currency_to     = ct.options[ct.selectedIndex].value    || 'XAF';
+	if( 'localStorage' in window){
+		if('amount' in localStorage)
+			var ea = localStorage.getItem('amount');
+		if('from_cu' in localStorage)
+			var cf = localStorage.getItem('from_cu');
+		if('to_cu' in localStorage)
+			var ct = localStorage.getItem('to_cu');
+	}else{
+		alert('this application need localStorage to perform properly');
+	}
+	let entered_amount  = ea || 1;
+	let currency_from   = cf || 'USD';
+	let currency_to     = ct || 'XAF';
 
 	const query_param = currency_from + '_' + currency_to;
 	 
@@ -70,7 +112,8 @@ const display_currency_list = (currencies) => {
 	const currency_from_dom = document.getElementById('from_corrency');
 	const currency_to_dom   = document.getElementById('to_currency');
 	const curs = currencies.results;
-	for (var key in curs) {
+	for (const key in curs) {
+		
 		const objs =curs[key];
 		let option =  `<option value="${ objs.currencyId }"> ${ objs.currencyId } - ${ objs.name } </option>`;
 
