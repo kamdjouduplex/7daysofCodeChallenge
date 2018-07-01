@@ -1,61 +1,128 @@
 
-'use strict';
+var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+ 
+//prefixes of window.IDB objects
+var IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction;
+var IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange
+ 
+if (!indexedDB) {
+    alert("Your browser doesn't support a stable version of IndexedDB.")
+} 
 
+var db;
+const setIndexDB = (data) => {
 
-// This is what our customer data looks like.
-const customerData = [
-  { ssn: "444-44-4444", name: "Bill", age: 35, email: "bill@company.com" },
-  { ssn: "555-55-5555", name: "Donna", age: 32, email: "donna@home.org" }
-];
+ 
+  var request = indexedDB.open(DB_NAME, DB_VERSION);
+   
+  request.onerror = function(e) {
+    console.log("error: ", e);
+  };
+   
+  request.onsuccess = function(e) {
+    db = request.result;
+    console.log("success: "+ db);
+  };
 
+  //console.log(db);
 
-function setIndexDB(db_name, db_version, data){
-
-	if( 'indexedDB' in window){
-		const request = window.indexedDB.open(db_name, db_version);
-
-		request.onerror = function(event) {
-		  	// Do something with request.errorCode!
-		  	alert('Why don\'t you allow my app to use indexDB, we garanty you to not used any of your confidencial info');
-		};
-
-		request.onsuccess = function(event) {
-		  	// Do something with request.result!
-		  	db = event.target.result;
-		};
-
-
-		// This event is only implemented in recent browsers   
-		request.onupgradeneeded = function(event) { 
-		  // Save the IDBDatabase interface 
-		  let db = event.target.result;
-
-		  // Create an objectStore for this database
-		  let objectStore = db.createObjectStore("currencies", { keyPath: "id" });
-
-		  // Create an index to search currencies by id. We want to ensure that
-		  // no two currencies have the same id, so use a unique index.
-		  objectStore.createIndex("id", "id", { unique: true });
-
-		  // Use transaction oncomplete to make sure the objectStore creation is 
-		    // finished before adding data into it.
-		    objectStore.transaction.oncomplete = function(event) {
-		      // Store values in the newly created objectStore.
-		      let customerObjectStore = db.transaction("currencies", "readwrite").objectStore("currencies");
-		      const curs = data.results;
-		      for (const key in curs) {
-				const objs =curs[key];
-				console.log(objs);
-		      	customerObjectStore.add(objs);
-		      }
-		      /*data.forEach(function(customer) {
-		        
-		      });*/
-		    };
-		};
-
-	}else{
-		alert('Your browser doesn\'t support indexDB');
-	}
+  request.onupgradeneeded = function(event) {
+    var objectStore = event.target.result.createObjectStore(STORE_NAME, {keyPath: "id"});
+    objectStore.createIndex("id", "id", { unique: true });
+    objectStore.transaction.oncomplete = (event) => {
+      // Store values in the newly created objectStore.
+      let customerObjectStore = db.transaction(STORE_NAME, "readwrite").objectStore(STORE_NAME);
+      const curs = data.results;
+      for (const key in curs) {
+        const objs =curs[key];
+        customerObjectStore.add(objs);
+      }
+    };
+  }
 }
 
+
+function Add() {
+        var request = db.transaction(["users"], "readwrite").objectStore("users")
+                .add({ id: "3", name: "Gautam", age: 30, email: "gautam@store.org" });
+                                 
+        request.onsuccess = function(e) {
+                alert("Gautam has been added to the database.");
+        };
+         
+        request.onerror = function(e) {
+                alert("Unable to add the information.");       
+        }
+         
+}
+
+
+function Read() {
+        var objectStore = db.transaction(["users"]).objectStore("users");
+        var request = objectStore.get("2");
+        request.onerror = function(event) {
+          alert("Unable to retrieve data from database!");
+        };
+        request.onsuccess = function(event) {          
+          if(request.result) {
+                alert("Name: " + request.result.name + ", Age: " + request.result.age + ", Email: " + request.result.email);
+          } else {
+                alert("Bidulata couldn't be found in your database!"); 
+          }
+        };
+}
+
+function ReadAll() {
+        var objectStore = db.transaction("users").objectStore("users");  
+        var req = objectStore.openCursor();
+
+        req.onsuccess = function(event) {
+      db.close();
+          var res = event.target.result;
+          if (res) {
+                alert("Key " + res.key + " is " + res.value.name + ", Age: " + res.value.age + ", Email: " + res.value.email);
+                res.continue();
+          }
+        }; 
+
+        req.onerror = function (e) {
+            console.log("Error Getting: ", e);
+        };    
+}
+
+/*
+const setIndexDB = (db_name, db_version, data) => {
+  var db;
+  if( 'indexedDB' in window){
+    var request = window.indexedDB.open(db_name, db_version);
+
+    request.onerror = (event) => {
+        console.log("indexedDB Error: " + JSON.stringify(event));
+    };
+
+    request.onsuccess = function(event) {
+      db = event.target.result;
+      console.log("success: "+ db);
+    };
+  
+    request.onupgradeneeded = (event) => { 
+      let objectStore = db.createObjectStore(STORE_NAME, { keyPath: "by_id" });
+      objectStore.createIndex("id", "id", { unique: true });
+      objectStore.transaction.oncomplete = (event) => {
+      
+      // Store values in the newly created objectStore.
+      let customerObjectStore = db.transaction(STORE_NAME, "readwrite").objectStore(STORE_NAME);
+      const curs = data.results;
+      for (const key in curs) {
+          const objs =curs[key];
+          customerObjectStore.add(objs);
+        }
+      };
+
+    };
+
+  }else{
+    alert('Your browser doesn\'t support indexDB');
+  }
+}
+*/

@@ -7,12 +7,13 @@
 var gulp = require('gulp');
 var browserSync = require('browser-sync').create();
 var useref = require('gulp-useref');
-var uglify = require('gulp-uglify');
+var uglify = require('gulp-uglify-es').default;
 var gulpIf = require('gulp-if');
 var cssnano = require('gulp-cssnano');
 var imagemin = require('gulp-imagemin');
 var del = require('del');
 var runSequence = require('run-sequence');
+var gulpCopy = require('gulp-copy');
 
 
 //embedded project server
@@ -37,18 +38,23 @@ gulp.task('useref', function(){
 
 //optimizing images
 gulp.task('images', function(){
-  return gulp.src('app/images/**/*.+(png|jpg|jpeg|gif|svg)')
+  return gulp.src('app/assets/images/**/*.+(png|jpg|jpeg|gif|svg)')
   .pipe(imagemin({
       // Setting interlaced to true
       interlaced: true
     }))
-  .pipe(gulp.dest('dist/images'))
+  .pipe(gulp.dest('dist/assets/images'))
 });
 
 //copy fonts files to the dist directory
 gulp.task('fonts', function() {
   return gulp.src('app/fonts/**/*')
   .pipe(gulp.dest('dist/fonts'))
+});
+
+gulp.task('copy', function(){
+  return gulp.src('app/sw.js, app/favicon.ico')
+    .pipe(gulp.dest('dist'))
 });
 
 //cleanning the dist folter
@@ -66,7 +72,7 @@ gulp.task('watch', ['browserSync'], function (){
 //here we build the production package
 gulp.task('build', function (callback) {
   runSequence('clean:dist', 
-    ['useref', 'images', 'fonts'],
+    ['useref', 'images', 'fonts', 'copy'],
     callback
   )
 })
